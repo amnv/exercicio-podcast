@@ -1,6 +1,7 @@
 package br.ufpe.cin.if710.podcast.ui;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,6 +11,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.facebook.stetho.Stetho;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -22,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ufpe.cin.if710.podcast.R;
+import br.ufpe.cin.if710.podcast.db.PodcastProvider;
+import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
@@ -38,7 +43,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        Stetho.initializeWithDefaults(this);
         items = (ListView) findViewById(R.id.items);
     }
 
@@ -63,6 +68,7 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -85,8 +91,20 @@ public class MainActivity extends Activity {
         @Override
         protected List<ItemFeed> doInBackground(String... params) {
             List<ItemFeed> itemList = new ArrayList<>();
+            PodcastProvider podcastProvider = new PodcastProvider(getBaseContext());
             try {
                 itemList = XmlFeedParser.parse(getRssFeed(params[0]));
+                for (ItemFeed it : itemList)
+                {
+                    ContentValues cv = new ContentValues();
+                    cv.put(PodcastProviderContract.EPISODE_TITLE, it.getTitle());
+                    cv.put(PodcastProviderContract.EPISODE_DATE, it.getPubDate());
+                    cv.put(PodcastProviderContract.EPISODE_LINK, it.getLink());
+                    cv.put(PodcastProviderContract.EPISODE_DESC, it.getDescription());
+                    cv.put(PodcastProviderContract.EPISODE_DOWNLOAD_LINK, it.getDownloadLink());
+
+                    podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI, cv);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (XmlPullParserException e) {
@@ -105,17 +123,21 @@ public class MainActivity extends Activity {
             //atualizar o list view
             items.setAdapter(adapter);
             items.setTextFilterEnabled(true);
-            /*
+
             items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     XmlFeedAdapter adapter = (XmlFeedAdapter) parent.getAdapter();
                     ItemFeed item = adapter.getItem(position);
+
                     String msg = item.getTitle() + " " + item.getLink();
                     Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(getApplicationContext(), EpisodeDetailActivity.class);
+                    intent.putExtra(ItemFeed.CLICKED_ITEM, item);
+                    startActivity(intent);
                 }
             });
-            /**/
         }
     }
 

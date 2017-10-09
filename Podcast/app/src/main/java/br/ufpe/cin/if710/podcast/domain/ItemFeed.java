@@ -1,12 +1,15 @@
 package br.ufpe.cin.if710.podcast.domain;
 
-public class ItemFeed {
+import java.io.Serializable;
+
+public class ItemFeed implements Serializable {
     private final String title;
     private final String link;
     private final String pubDate;
     private final String description;
     private final String downloadLink;
 
+    public final static String  CLICKED_ITEM = "CLICKED_ITEM";
 
     public ItemFeed(String title, String link, String pubDate, String description, String downloadLink) {
         this.title = title;

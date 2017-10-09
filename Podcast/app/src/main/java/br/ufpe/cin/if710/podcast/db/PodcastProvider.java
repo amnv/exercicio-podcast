@@ -2,17 +2,29 @@ package br.ufpe.cin.if710.podcast.db;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
 public class PodcastProvider extends ContentProvider {
-    public PodcastProvider() {
+
+    private PodcastDBHelper db;
+    public PodcastProvider(Context c) {
+        db = PodcastDBHelper.getInstance(c);
     }
+
+    public PodcastProvider() { }
+
+    @Override
+    public boolean onCreate()
+    {
+        return false;
+    }
+
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Implement this to handle requests to delete one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return db.getWritableDatabase().delete(PodcastProviderContract.EPISODE_TABLE, selection, selectionArgs);
     }
 
     @Override
@@ -24,27 +36,20 @@ public class PodcastProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        // TODO: Implement this to handle requests to insert a new row.
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
-    @Override
-    public boolean onCreate() {
-        // TODO: Implement this to initialize your content provider on startup.
-        return false;
+        db.getWritableDatabase().insert(PodcastProviderContract.EPISODE_TABLE, null, values);
+        return null;
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-        // TODO: Implement this to handle query requests from clients.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return db.getWritableDatabase().
+                query(PodcastProviderContract.EPISODE_TABLE, projection, selection, selectionArgs, null, null, sortOrder);
     }
 
     @Override
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return db.getWritableDatabase().update(PodcastProviderContract.EPISODE_TABLE, values, selection,selectionArgs);
     }
 }

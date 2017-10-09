@@ -1,13 +1,12 @@
 package br.ufpe.cin.if710.podcast.db;
 
 import android.content.Context;
-import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class PodcastDBHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "podcasts";
+    private static final String DATABASE_NAME = "podcast";
     public static final String DATABASE_TABLE = "episodes";
     private static final int DB_VERSION = 1;
 
@@ -15,7 +14,7 @@ public class PodcastDBHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DB_VERSION);
     }
 
-    private static PodcastDBHelper db;
+    private static PodcastDBHelper db = null;
 
     public static PodcastDBHelper getInstance(Context c) {
         if (db==null) {
@@ -39,12 +38,12 @@ public class PodcastDBHelper extends SQLiteOpenHelper {
     final private static String CREATE_CMD =
             "CREATE TABLE "+DATABASE_TABLE+" (" + _ID
                     + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + EPISODE_TITLE + " TEXT NOT NULL, "
-                    + EPISODE_DATE + " TEXT NOT NULL, "
-                    + EPISODE_LINK + " TEXT NOT NULL, "
-                    + EPISODE_DESC + " TEXT NOT NULL, "
-                    + EPISODE_DOWNLOAD_LINK + " TEXT NOT NULL, "
-                    + EPISODE_FILE_URI + " TEXT NOT NULL)";
+                    + EPISODE_TITLE + " TEXT, "
+                    + EPISODE_DATE + " TEXT, "
+                    + EPISODE_LINK + " TEXT, "
+                    + EPISODE_DESC + " TEXT, "
+                    + EPISODE_DOWNLOAD_LINK + " TEXT, "
+                    + EPISODE_FILE_URI + " TEXT)";
 
 
 
