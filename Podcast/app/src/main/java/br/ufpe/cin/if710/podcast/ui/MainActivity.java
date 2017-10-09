@@ -2,14 +2,20 @@ package br.ufpe.cin.if710.podcast.ui;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CursorAdapter;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
@@ -38,6 +44,7 @@ public class MainActivity extends Activity {
     //TODO teste com outros links de podcast
 
     private ListView items;
+    private PodcastProvider podcastProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +52,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         Stetho.initializeWithDefaults(this);
         items = (ListView) findViewById(R.id.items);
+        this.podcastProvider =  new PodcastProvider(getApplicationContext());
     }
 
     @Override
@@ -72,7 +80,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        new DownloadXmlTask().execute(RSS_FEED);
+
+        ConnectivityManager cm =
+                (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if (isConnected) new DownloadXmlTask().execute(RSS_FEED);
+        else new AcessDatebase().execute();
     }
 
     @Override
@@ -91,7 +107,6 @@ public class MainActivity extends Activity {
         @Override
         protected List<ItemFeed> doInBackground(String... params) {
             List<ItemFeed> itemList = new ArrayList<>();
-            PodcastProvider podcastProvider = new PodcastProvider(getBaseContext());
             try {
                 itemList = XmlFeedParser.parse(getRssFeed(params[0]));
                 for (ItemFeed it : itemList)
@@ -162,5 +177,26 @@ public class MainActivity extends Activity {
             }
         }
         return rssFeed;
+    }
+
+    private class AcessDatebase extends AsyncTask<Void, Void, Cursor>
+    {
+
+        @Override
+        protected Cursor doInBackground(Void... params) {
+            Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI, null, null, null, null);
+            cursor.getCount();
+            return cursor;
+        }
+
+        @Override
+        protected void onPostExecute(Cursor cursor) {
+            CursorAdapter cursorAdapter =
+                    new SimpleCursorAdapter(getApplicationContext(), R.layout.itemlista, null,
+                            new String[] {PodcastProviderContract.EPISODE_TITLE, PodcastProviderContract.EPISODE_DATE},
+                            new int[]{R.id.item_title, R.id.item_date}, 0);
+            cursorAdapter.changeCursor(cursor);
+            items.setAdapter(cursorAdapter);
+        }
     }
 }

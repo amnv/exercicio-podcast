@@ -40,6 +40,16 @@ public class PodcastProvider extends ContentProvider {
         return null;
     }
 
+    /**
+     *
+     * @param uri
+     * @param projection column list
+     * @param selection
+     * @param selectionArgs
+     * @param sortOrder
+     * @return
+     */
+
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
