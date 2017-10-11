@@ -12,11 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.CursorAdapter;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
@@ -37,8 +33,6 @@ import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
-
-import static br.ufpe.cin.if710.podcast.R.id.item_title;
 
 public class MainActivity extends Activity {
 
@@ -141,22 +135,6 @@ public class MainActivity extends Activity {
             //atualizar o list view
             items.setAdapter(adapter);
             items.setTextFilterEnabled(true);
-
-            /*items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    XmlFeedAdapter adapter = (XmlFeedAdapter) parent.getAdapter();
-                    ItemFeed item = adapter.getItem(position);
-
-                    String msg = item.getTitle() + " " + item.getLink();
-                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(getApplicationContext(), EpisodeDetailActivity.class);
-                    intent.putExtra(ItemFeed.CLICKED_ITEM, item);
-                    startActivity(intent);
-                }
-            });
-            */
         }
     }
 
@@ -183,34 +161,35 @@ public class MainActivity extends Activity {
         return rssFeed;
     }
 
-    private class AcessDatebase extends AsyncTask<Void, Void, Cursor>
+    private class AcessDatebase extends AsyncTask<Void, Void, List<ItemFeed>>
     {
 
         @Override
-        protected Cursor doInBackground(Void... params) {
+        protected List<ItemFeed> doInBackground(Void... params) {
             Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI, null, null, null, null);
-            cursor.getCount();
-            return cursor;
+            List<ItemFeed> feed = new ArrayList<ItemFeed>();
+            cursor.moveToFirst();
+            while(!cursor.isLast())
+            {
+                //pegando valores cursor e adicionando na lista de feed
+                String title = cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_TITLE));
+                String link = cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_LINK));
+                String pubDate = cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_DATE));
+                String description = cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_DESC));
+                String downloadLink = cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_DOWNLOAD_LINK));
+                ItemFeed itemFeed = new ItemFeed(title, link, pubDate, description,downloadLink);
+                feed.add(itemFeed);
+                cursor.moveToNext();
+            }
+            Log.i("Mostra ultimo valor", cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_TITLE)));
+            return feed;
         }
 
         @Override
-        protected void onPostExecute(Cursor cursor) {
-            CursorAdapter cursorAdapter =
-                    new SimpleCursorAdapter(getApplicationContext(), R.layout.itemlista, null,
-                            new String[] {PodcastProviderContract.EPISODE_TITLE, PodcastProviderContract.EPISODE_DATE},
-                            new int[]{item_title, R.id.item_date}, 0);
-            cursorAdapter.changeCursor(cursor);
-            items.setAdapter(cursorAdapter);
-            items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Log.i("asd", "funcionou");
-                    Intent intent = new Intent(getApplicationContext(), EpisodeDetailActivity.class);
-                    intent.putExtra(ItemFeed.CLICKED_ITEM, (String) parent.getItemAtPosition(position));
-                    startActivity(intent);
-                }
-            });
-
+        protected void onPostExecute(List<ItemFeed> feed) {
+            XmlFeedAdapter xmlFeedAdapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed);
+            items.setAdapter(xmlFeedAdapter);
+            items.setTextFilterEnabled(true);
         }
     }
 }
