@@ -4,6 +4,46 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="br.ufpe.cin.if710.podcast.ui.EpisodeDetailActivity">
+    tools:context="br.ufpe.cin.if710.podcast.ui.EpisodeDetailActivity"
+    android:id="@+id/parent">
+
+    <TextView
+        android:id="@+id/viewTitle"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:text="title"
+        app:layout_constraintLeft_toRightOf="@+id/parent"
+        app:layout_constraintTop_toBottomOf="@+id/parent"/>
+
+    <TextView
+        android:id="@+id/viewLink"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:text="link"
+        app:layout_constraintLeft_toRightOf="@+id/viewTitle"/>
+
+    <TextView
+        android:id="@+id/viewPubDate"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:text="pubDate"
+        app:layout_constraintLeft_toRightOf="@+id/parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewTitle"/>
+
+    <TextView
+        android:id="@+id/viewDescription"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:text="description"
+        app:layout_constraintLeft_toRightOf="@+id/viewPubDate"
+        app:layout_constraintTop_toBottomOf="@+id/viewTitle"/>
+
+    <TextView
+        android:id="@+id/downloadLink"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        app:layout_constraintLeft_toRightOf="@+id/parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewPubDate"/>
 
 </android.support.constraint.ConstraintLayout>

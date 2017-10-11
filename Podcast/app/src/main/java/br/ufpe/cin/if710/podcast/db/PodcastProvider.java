@@ -13,7 +13,7 @@ public class PodcastProvider extends ContentProvider {
         db = PodcastDBHelper.getInstance(c);
     }
 
-    public PodcastProvider() { }
+    public PodcastProvider() {}
 
     @Override
     public boolean onCreate()
@@ -53,7 +53,7 @@ public class PodcastProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-        return db.getWritableDatabase().
+        return db.getReadableDatabase().
                 query(PodcastProviderContract.EPISODE_TABLE, projection, selection, selectionArgs, null, null, sortOrder);
     }
 

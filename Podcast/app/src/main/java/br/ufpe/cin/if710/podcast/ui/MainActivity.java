@@ -9,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,6 +37,8 @@ import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
+
+import static br.ufpe.cin.if710.podcast.R.id.item_title;
 
 public class MainActivity extends Activity {
 
@@ -139,7 +142,7 @@ public class MainActivity extends Activity {
             items.setAdapter(adapter);
             items.setTextFilterEnabled(true);
 
-            items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            /*items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     XmlFeedAdapter adapter = (XmlFeedAdapter) parent.getAdapter();
@@ -153,6 +156,7 @@ public class MainActivity extends Activity {
                     startActivity(intent);
                 }
             });
+            */
         }
     }
 
@@ -194,9 +198,19 @@ public class MainActivity extends Activity {
             CursorAdapter cursorAdapter =
                     new SimpleCursorAdapter(getApplicationContext(), R.layout.itemlista, null,
                             new String[] {PodcastProviderContract.EPISODE_TITLE, PodcastProviderContract.EPISODE_DATE},
-                            new int[]{R.id.item_title, R.id.item_date}, 0);
+                            new int[]{item_title, R.id.item_date}, 0);
             cursorAdapter.changeCursor(cursor);
             items.setAdapter(cursorAdapter);
+            items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Log.i("asd", "funcionou");
+                    Intent intent = new Intent(getApplicationContext(), EpisodeDetailActivity.class);
+                    intent.putExtra(ItemFeed.CLICKED_ITEM, (String) parent.getItemAtPosition(position));
+                    startActivity(intent);
+                }
+            });
+
         }
     }
 }
