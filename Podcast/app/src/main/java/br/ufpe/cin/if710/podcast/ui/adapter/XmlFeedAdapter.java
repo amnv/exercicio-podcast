@@ -1,16 +1,22 @@
 package br.ufpe.cin.if710.podcast.ui.adapter;
 
+import android.app.DownloadManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.List;
 
 import br.ufpe.cin.if710.podcast.R;
+import br.ufpe.cin.if710.podcast.db.PodcastProvider;
+import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.ui.EpisodeDetailActivity;
 
@@ -55,15 +61,19 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
     static class ViewHolder {
         TextView item_title;
         TextView item_date;
+        Button button;
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final ViewHolder holder;
         if (convertView == null) {
             convertView = View.inflate(getContext(), linkResource, null);
             holder = new ViewHolder();
             holder.item_title = (TextView) convertView.findViewById(R.id.item_title);
+
+            //adicionando click listener
+            //ao cliclar vai para EpisodeDetailActivity
             holder.item_title.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -77,6 +87,26 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
             });
             holder.item_date = (TextView) convertView.findViewById(R.id.item_date);
             convertView.setTag(holder);
+
+
+            holder.button = convertView.findViewById(R.id.item_action);
+            holder.button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //baixando audio
+                    DownloadManager downloadManager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(getItem(position).getDownloadLink()));
+                    downloadManager.enqueue(request);
+
+                    //adicionando uri no banco
+                    String arg[] = {holder.item_title.getText().toString()};
+                    ContentValues c = new ContentValues();
+                    c.put(PodcastProviderContract.EPISODE_FILE_URI, downloadManager.COLUMN_LOCAL_URI);
+                    PodcastProvider podcastProvider = new PodcastProvider(getContext());
+                    podcastProvider
+                            .update(PodcastProviderContract.EPISODE_LIST_URI, c, "title=?", arg);
+                }
+            });
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
