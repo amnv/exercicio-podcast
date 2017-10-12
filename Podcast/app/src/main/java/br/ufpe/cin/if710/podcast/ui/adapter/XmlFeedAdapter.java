@@ -1,10 +1,8 @@
 package br.ufpe.cin.if710.podcast.ui.adapter;
 
-import android.app.DownloadManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -15,9 +13,8 @@ import android.widget.Toast;
 import java.util.List;
 
 import br.ufpe.cin.if710.podcast.R;
-import br.ufpe.cin.if710.podcast.db.PodcastProvider;
-import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
+import br.ufpe.cin.if710.podcast.service.DownloadIntentService;
 import br.ufpe.cin.if710.podcast.ui.EpisodeDetailActivity;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -25,6 +22,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
 
     int linkResource;
+    public final static String  DOWNLOAD_LINK = "DOWNLOAD_LINK";
+    public final static String  TITLE_NAME = "DOWNLOAD_LINK";
 
     public XmlFeedAdapter(Context context, int resource, List<ItemFeed> objects) {
         super(context, resource, objects);
@@ -80,7 +79,7 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
                     Toast.makeText(getContext(), "funcionou", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(getContext(), EpisodeDetailActivity.class);
                     intent.putExtra(ItemFeed.CLICKED_ITEM, holder.item_title.getText());
-                    intent.putExtra("PUBDATE", holder.item_date.getText());
+                    intent.putExtra(ItemFeed.CLICK_PUBDATE, holder.item_date.getText());
                     intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
                     getContext().startActivity(intent);
                 }
@@ -93,18 +92,12 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
             holder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //baixando audio
-                    DownloadManager downloadManager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(getItem(position).getDownloadLink()));
-                    downloadManager.enqueue(request);
-
-                    //adicionando uri no banco
-                    String arg[] = {holder.item_title.getText().toString()};
-                    ContentValues c = new ContentValues();
-                    c.put(PodcastProviderContract.EPISODE_FILE_URI, downloadManager.COLUMN_LOCAL_URI);
-                    PodcastProvider podcastProvider = new PodcastProvider(getContext());
-                    podcastProvider
-                            .update(PodcastProviderContract.EPISODE_LIST_URI, c, "title=?", arg);
+                    Log.i("Clicked button", "chamando o DownloadIntentService");
+                    Intent intent = new Intent(getContext(), DownloadIntentService.class);
+                    intent.setAction(DownloadIntentService.ACTION_DOWNLOAD_AUDIO);
+                    intent.putExtra(DOWNLOAD_LINK, getItem(position).getDownloadLink());
+                    intent.putExtra(TITLE_NAME, holder.item_title.getText().toString());
+                    getContext().startService(intent);
                 }
             });
         } else {

@@ -27,7 +27,11 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".ui.EpisodeDetailActivity"></activity>
+        <activity android:name=".ui.EpisodeDetailActivity" />
+
+        <service
+            android:name=".service.DownloadIntentService"
+            android:exported="false" />
     </application>
 
 </manifest>

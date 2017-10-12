@@ -10,6 +10,7 @@ public class ItemFeed implements Serializable {
     private final String downloadLink;
 
     public final static String  CLICKED_ITEM = "CLICKED_ITEM";
+    public final static String CLICK_PUBDATE = "PUBDATE";
 
     public ItemFeed(String title, String link, String pubDate, String description, String downloadLink) {
         this.title = title;
