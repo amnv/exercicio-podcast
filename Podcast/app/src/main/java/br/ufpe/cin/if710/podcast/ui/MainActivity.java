@@ -9,18 +9,15 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.ListView;
 
 import com.facebook.stetho.Stetho;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,10 +78,10 @@ public class MainActivity extends Activity {
 
         //adicionando receiver
         IntentFilter intentFilter = new IntentFilter("br.ufpe.cin.if710.podcast.DOWNLOAD_AUDIO");
-        registerReceiver(downloadAudio, intentFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(downloadAudio, intentFilter);
 
         IntentFilter insertedFilter = new IntentFilter("br.ufpe.cin.if710.podcast.INSERIDO");
-        registerReceiver(this.insertedDatabase, insertedFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(insertedDatabase, insertedFilter);
 
         if (isConnected)
         {
@@ -99,32 +96,7 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         XmlFeedAdapter adapter = (XmlFeedAdapter) items.getAdapter();
-        adapter.clear();
-    }
-
-
-
-    //TODO Opcional - pesquise outros meios de obter arquivos da internet
-    private String getRssFeed(String feed) throws IOException {
-        InputStream in = null;
-        String rssFeed = "";
-        try {
-            URL url = new URL(feed);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            in = conn.getInputStream();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            for (int count; (count = in.read(buffer)) != -1; ) {
-                out.write(buffer, 0, count);
-            }
-            byte[] response = out.toByteArray();
-            rssFeed = new String(response, "UTF-8");
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-        }
-        return rssFeed;
+       if (adapter != null) adapter.clear();
     }
 
     private void acessDatabase()
@@ -144,6 +116,7 @@ public class MainActivity extends Activity {
             ItemFeed itemFeed = new ItemFeed(title, link, pubDate, description,downloadLink);
             feed.add(itemFeed);
             cursor.moveToNext();
+            Log.d("recuperando do banco", title);
         }
 
         XmlFeedAdapter xmlFeedAdapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed);
@@ -151,19 +124,24 @@ public class MainActivity extends Activity {
         items.setTextFilterEnabled(true);
     }
 
-    private BroadcastReceiver downloadAudio = new BroadcastReceiver()
+    BroadcastReceiver downloadAudio = new BroadcastReceiver()
     {
         @Override
         public void onReceive(Context context, Intent intent)
         {
             Log.i("downloadAudioReceiver", "download Conlcuido");
+            int pos = intent.getIntExtra(DownloadIntentService.POSICAO_ITEM, 0);
+            String estado = intent.getStringExtra(DownloadIntentService.ESTADO_ITEM);
+            Button button = items.getChildAt(pos).findViewById(R.id.item_action);
+            button.setText(estado);
         }
     };
 
 
-    private BroadcastReceiver insertedDatabase = new BroadcastReceiver() {
+    BroadcastReceiver insertedDatabase = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.i("insertDataBse", "Mostrando na tela");
             acessDatabase();
         }
     };

@@ -6,11 +6,16 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +36,9 @@ public class DownloadIntentService extends IntentService {
 
     public static final String ACTION_INSERT_DATABASE = "inserir";
     public static final String ACTION_DOWNLOAD_AUDIO = "download";
+    public static final String POSICAO_ITEM = "posicao";
+    public static final String ESTADO_ITEM = "estado";
+
     private PodcastProvider podcastProvider;
 
 
@@ -56,15 +64,19 @@ public class DownloadIntentService extends IntentService {
             {
                 String downloadLink = intent.getStringExtra(XmlFeedAdapter.DOWNLOAD_LINK);
                 String title = intent.getStringExtra(XmlFeedAdapter.TITLE_NAME);
-                this.downloadAudio(downloadLink, title);
+                int pos = intent.getIntExtra(POSICAO_ITEM, 0);
+                String estado = intent.getStringExtra(ESTADO_ITEM);
+                this.downloadAudio(downloadLink, title, pos, estado);
             }
         }
     }
 
-    private void insert(String rssFeed)
+    private void insert(String rss)
     {
         List<ItemFeed> itemList = new ArrayList<>();
         try {
+            String rssFeed = this.getRssFeed(rss);
+            Log.d("valorRSS", rssFeed);
             itemList = XmlFeedParser.parse(rssFeed);
             for (ItemFeed it : itemList)
             {
@@ -79,18 +91,19 @@ public class DownloadIntentService extends IntentService {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (XmlPullParserException e) {
+            } catch (XmlPullParserException e) {
             e.printStackTrace();
         }
 
         Log.i("insert database", "inserido no banco");
         Intent intent = new Intent();
         intent.setAction("br.ufpe.cin.if710.podcast.INSERIDO");
-        sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void downloadAudio(String downloadLink, String title)
+    private void downloadAudio(String downloadLink, String title, int pos, String estado)
     {
+        Log.i("link para download", downloadLink);
         //baixando audio
         DownloadManager downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadLink));
@@ -105,7 +118,32 @@ public class DownloadIntentService extends IntentService {
                 .update(PodcastProviderContract.EPISODE_LIST_URI, c, "title=?", arg);
 
         Intent intent = new Intent();
+        intent.putExtra(POSICAO_ITEM, pos);
+        intent.putExtra(ESTADO_ITEM, estado);
         intent.setAction("br.ufpe.cin.if710.podcast.DOWNLOAD_AUDIO");
-        sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    //TODO Opcional - pesquise outros meios de obter arquivos da internet
+     private String getRssFeed(String feed) throws IOException {
+        InputStream in = null;
+        String rssFeed = "";
+        try {
+            URL url = new URL(feed);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            in = conn.getInputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            for (int count; (count = in.read(buffer)) != -1; ) {
+                out.write(buffer, 0, count);
+            }
+            byte[] response = out.toByteArray();
+            rssFeed = new String(response, "UTF-8");
+        } finally {
+            if (in != null) {
+                in.close();
+            }
+        }
+        return rssFeed;
     }
 }

@@ -38,12 +38,4 @@
         app:layout_constraintLeft_toRightOf="@+id/viewPubDate"
         app:layout_constraintTop_toBottomOf="@+id/viewTitle"/>
 
-    <TextView
-        android:id="@+id/downloadLink"
-        android:layout_width="368dp"
-        android:layout_height="wrap_content"
-        android:text="TextView"
-        app:layout_constraintLeft_toRightOf="@+id/parent"
-        app:layout_constraintTop_toBottomOf="@+id/viewPubDate"/>
-
 </android.support.constraint.ConstraintLayout>

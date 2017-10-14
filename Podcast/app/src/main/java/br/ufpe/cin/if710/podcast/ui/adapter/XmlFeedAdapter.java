@@ -23,7 +23,7 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
 
     int linkResource;
     public final static String  DOWNLOAD_LINK = "DOWNLOAD_LINK";
-    public final static String  TITLE_NAME = "DOWNLOAD_LINK";
+    public final static String  TITLE_NAME = "TITLE_NAME";
 
     public XmlFeedAdapter(Context context, int resource, List<ItemFeed> objects) {
         super(context, resource, objects);
@@ -93,11 +93,26 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
                 @Override
                 public void onClick(View v) {
                     Log.i("Clicked button", "chamando o DownloadIntentService");
-                    Intent intent = new Intent(getContext(), DownloadIntentService.class);
-                    intent.setAction(DownloadIntentService.ACTION_DOWNLOAD_AUDIO);
-                    intent.putExtra(DOWNLOAD_LINK, getItem(position).getDownloadLink());
-                    intent.putExtra(TITLE_NAME, holder.item_title.getText().toString());
-                    getContext().startService(intent);
+
+                    if (holder.button.getText().toString().equalsIgnoreCase("baixar"))
+                    {
+                        Intent intent = new Intent(getContext(), DownloadIntentService.class);
+                        intent.setAction(DownloadIntentService.ACTION_DOWNLOAD_AUDIO);
+                        intent.putExtra(DOWNLOAD_LINK, getItem(position).getDownloadLink());
+                        intent.putExtra(TITLE_NAME, holder.item_title.getText().toString());
+                        intent.putExtra(DownloadIntentService.POSICAO_ITEM, position);
+
+                        intent.putExtra(DownloadIntentService.ESTADO_ITEM, "BAIXANDO");
+                        getContext().startService(intent);
+                    }
+                    else if(holder.button.getText().toString().equalsIgnoreCase("play"))
+                    {
+
+                    }
+                    else if (holder.button.getText().toString().equalsIgnoreCase("pause"))
+                    {
+
+                    }
                 }
             });
         } else {
@@ -107,4 +122,5 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
         holder.item_date.setText(getItem(position).getPubDate());
         return convertView;
     }
+
 }
