@@ -2,6 +2,10 @@ package br.ufpe.cin.if710.podcast.ui.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,9 +14,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.List;
 
 import br.ufpe.cin.if710.podcast.R;
+import br.ufpe.cin.if710.podcast.db.PodcastProvider;
+import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.service.DownloadIntentService;
 import br.ufpe.cin.if710.podcast.ui.EpisodeDetailActivity;
@@ -102,12 +109,32 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
                         intent.putExtra(TITLE_NAME, holder.item_title.getText().toString());
                         intent.putExtra(DownloadIntentService.POSICAO_ITEM, position);
 
-                        intent.putExtra(DownloadIntentService.ESTADO_ITEM, "BAIXANDO");
+                        intent.putExtra(DownloadIntentService.ESTADO_ITEM, "BAIXANDO...");
                         getContext().startService(intent);
                     }
-                    else if(holder.button.getText().toString().equalsIgnoreCase("play"))
-                    {
-
+                    else if(holder.button.getText().toString().equalsIgnoreCase("play")) {
+                        try {
+                            PodcastProvider podcastProvider = new PodcastProvider(getContext());
+                            Cursor cursor = podcastProvider
+                                    .query(PodcastProviderContract.EPISODE_LIST_URI,
+                                            new String[] {PodcastProviderContract.EPISODE_FILE_URI},
+                                            "title=?",
+                                            new String[] {holder.item_title.getText().toString()},
+                                            null);
+                            cursor.moveToFirst();
+                            String loc = cursor.getString(cursor.getColumnIndex(PodcastProviderContract.EPISODE_FILE_URI));
+                            Log.i("File path", loc);
+                            Uri myUri = Uri.parse(loc);
+                            MediaPlayer mediaPlayer = new MediaPlayer();
+                            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                            mediaPlayer.setDataSource(getContext(), myUri);
+                            mediaPlayer.prepareAsync();
+                            mediaPlayer.start();
+                        } catch (IllegalArgumentException i) {
+                            i.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                     else if (holder.button.getText().toString().equalsIgnoreCase("pause"))
                     {
