@@ -5,13 +5,16 @@ import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Environment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -78,24 +81,36 @@ public class DownloadIntentService extends IntentService {
             String rssFeed = this.getRssFeed(rss);
             Log.d("valorRSS", rssFeed);
             itemList = XmlFeedParser.parse(rssFeed);
-            for (ItemFeed it : itemList)
-            {
-                ContentValues cv = new ContentValues();
-                cv.put(PodcastProviderContract.EPISODE_TITLE, it.getTitle());
-                cv.put(PodcastProviderContract.EPISODE_DATE, it.getPubDate());
-                cv.put(PodcastProviderContract.EPISODE_LINK, it.getLink());
-                cv.put(PodcastProviderContract.EPISODE_DESC, it.getDescription());
-                cv.put(PodcastProviderContract.EPISODE_DOWNLOAD_LINK, it.getDownloadLink());
+            Cursor cursor = this.podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI, null, null, null, null);
+            cursor.moveToFirst();
 
-                podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI, cv);
+            //Update database only if had web update
+            if (itemList.size() != cursor.getCount())
+            {
+
+                for (ItemFeed it : itemList) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(PodcastProviderContract.EPISODE_TITLE, it.getTitle());
+                    cv.put(PodcastProviderContract.EPISODE_DATE, it.getPubDate());
+                    cv.put(PodcastProviderContract.EPISODE_LINK, it.getLink());
+                    cv.put(PodcastProviderContract.EPISODE_DESC, it.getDescription());
+                    cv.put(PodcastProviderContract.EPISODE_DOWNLOAD_LINK, it.getDownloadLink());
+
+                    podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI, cv);
+                }
+                Log.i("insert database", "inserido no banco");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            } catch (XmlPullParserException e) {
+            cursor.close();
+        }
+        catch(IOException i)
+        {
+            i.printStackTrace();
+        } catch(XmlPullParserException e)
+        {
             e.printStackTrace();
         }
 
-        Log.i("insert database", "inserido no banco");
+
         Intent intent = new Intent();
         intent.setAction("br.ufpe.cin.if710.podcast.INSERIDO");
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -107,21 +122,61 @@ public class DownloadIntentService extends IntentService {
         //baixando audio
         DownloadManager downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadLink));
-        downloadManager.enqueue(request);
+        Long id = downloadManager.enqueue(request);
+
+        //pagando filePath
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(id);
+        Cursor cursor = downloadManager.query(query);
+
+        String filePath = "";
+        if (cursor.moveToFirst()) {
+            int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+            if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                filePath = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
+            }
+        }
+        cursor.close();
 
         //adicionando uri no banco
+        Log.i("filePath", filePath);
         String arg[] = {title};
         ContentValues c = new ContentValues();
-        c.put(PodcastProviderContract.EPISODE_FILE_URI, downloadManager.COLUMN_LOCAL_URI);
+        c.put(PodcastProviderContract.EPISODE_FILE_URI, filePath);
         PodcastProvider podcastProvider = new PodcastProvider(getApplicationContext());
         podcastProvider
                 .update(PodcastProviderContract.EPISODE_LIST_URI, c, "title=?", arg);
 
+        /*if (isExternalStorageWritable())
+        {
+            File file = getAlbumStorageDir("audios");
+            file.cre
+        }
+        */
         Intent intent = new Intent();
         intent.putExtra(POSICAO_ITEM, pos);
         intent.putExtra(ESTADO_ITEM, estado);
         intent.setAction("br.ufpe.cin.if710.podcast.DOWNLOAD_AUDIO");
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public File getAlbumStorageDir(String albumName) {
+        // Get the directory for the user's public pictures directory.
+        File file = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), albumName);
+        if (!file.mkdirs()) {
+            Log.e("ErroDirectory", "Directory not created");
+        }
+        return file;
     }
 
     //TODO Opcional - pesquise outros meios de obter arquivos da internet

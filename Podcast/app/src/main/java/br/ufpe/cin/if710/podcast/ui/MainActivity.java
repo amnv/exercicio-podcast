@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +13,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
     //ao fazer envio da resolucao, use este link no seu codigo!
     private final String RSS_FEED = "http://leopoldomt.com/if710/fronteirasdaciencia.xml";
     //TODO teste com outros links de podcast
-
+    private static boolean appInFront;
     private ListView items;
     private int positionClicked;
 
@@ -103,15 +103,22 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        appInFront = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        appInFront = false;
+    }
+
+    @Override
     protected void onStop() {
-        super.onStop();
         XmlFeedAdapter adapter = (XmlFeedAdapter) items.getAdapter();
-       if (adapter != null) adapter.clear();
-        /*
-        unregisterReceiver(downloadingAudio);
-        unregisterReceiver(insertedDatabase);
-        unregisterReceiver(downloadAudioFinished);
-        */
+        if (adapter != null) adapter.clear();
+        super.onStop();
     }
 
     private void acessDatabase()
@@ -161,7 +168,8 @@ public class MainActivity extends Activity {
             acessDatabase();
 
             //enviando notificacao
-            //notification();
+            if (!MainActivity.appInFront)
+                notification();
         }
     };
 
@@ -171,6 +179,23 @@ public class MainActivity extends Activity {
             Log.i("downloadAudioFineshed", "download Concluido");
             Log.d("valorPosicaobaixado", positionClicked + "");
 
+           /* //pagando filePath
+            DownloadManager downloadManager = new DownloadManager();
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(id);
+            Cursor cursor = downloadManager.query(query);
+            Log.i("filePath", filePath);
+
+
+            String filePath = "";
+            if (cursor.moveToFirst()) {
+                int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                    filePath = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
+                }
+            }
+            cursor.close();
+*/
             Button button = items.getChildAt(positionClicked).findViewById(R.id.item_action);
             button.setText("PLAY");
         }
@@ -178,11 +203,11 @@ public class MainActivity extends Activity {
 
     private void notification()
     {
-
         NotificationCompat.Builder mBuilder =
-        new NotificationCompat.Builder(this)
-                        .setContentTitle("My notification")
-                        .setContentText("Hello World!");
+                new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.notification_icon)
+                .setContentTitle("Notificacao de termino")
+                .setContentText("Podcasts atualizados");
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, MainActivity.class);
 
@@ -192,19 +217,29 @@ public class MainActivity extends Activity {
         // your application to the Home screen.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // Adds the back stack for the Intent (but not the Intent itself)
-                stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addParentStack(MainActivity.class);
         // Adds the Intent that starts the Activity to the top of the stack
-                stackBuilder.addNextIntent(resultIntent);
-                PendingIntent resultPendingIntent =
-                        stackBuilder.getPendingIntent(
-                                0,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                        );
-                mBuilder.setContentIntent(resultPendingIntent);
-                NotificationManager mNotificationManager =
-                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        // mId allows you to update the notification later on.
-       mNotificationManager.notify(123, mBuilder.build());
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+// mId allows you to update the notification later on.
+        mNotificationManager.notify(0, mBuilder.build());
     }
+
+      /** Checks if external storage is available for read and write **/
+    /* public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+*/
 }
 

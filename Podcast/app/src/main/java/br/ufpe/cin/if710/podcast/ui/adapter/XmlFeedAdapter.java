@@ -142,6 +142,18 @@ public class XmlFeedAdapter extends ArrayAdapter<ItemFeed> {
                     }
                 }
             });
+
+            PodcastProvider podcastProvider = new PodcastProvider(getContext());
+            Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI,
+                   new String[] {PodcastProviderContract.EPISODE_DOWNLOAD_LINK},
+                    PodcastProviderContract.EPISODE_TITLE + "=?",
+                    new String[] {holder.item_title.getText().toString()}, null);
+            cursor.moveToFirst();
+            if (cursor.getCount() > 0  &&  !cursor.getString(0).isEmpty())
+            {
+                holder.button.setText("PLAY");
+            }
+            cursor.close();
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
