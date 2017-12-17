@@ -2,7 +2,7 @@ package br.ufpe.cin.if710.podcast.service;
 
 import android.app.DownloadManager;
 import android.app.IntentService;
-import android.content.ContentValues;
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -22,8 +22,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import br.ufpe.cin.if710.podcast.db.PodcastProvider;
-import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
+import br.ufpe.cin.if710.podcast.db.architectureComponents.PodcastDatabase;
+import br.ufpe.cin.if710.podcast.db.architectureComponents.PodcastRoom;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.domain.XmlFeedParser;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
@@ -42,7 +42,8 @@ public class DownloadIntentService extends IntentService {
     public static final String POSICAO_ITEM = "posicao";
     public static final String ESTADO_ITEM = "estado";
 
-    private PodcastProvider podcastProvider;
+    public PodcastDatabase db;
+  //  private PodcastProvider podcastProvider;
 
 
     public DownloadIntentService() {
@@ -51,12 +52,13 @@ public class DownloadIntentService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        this.podcastProvider = new PodcastProvider(getApplicationContext());
+       // this.podcastProvider = new PodcastProvider(getApplicationContext());
 
         Log.i("DownloadIntentService", "entrou");
 
         if (intent != null)
         {
+            this.db = Room.databaseBuilder(this, PodcastDatabase.class, "episodes").build();
             final String action = intent.getAction();
             if (ACTION_INSERT_DATABASE.equals(action))
             {
@@ -81,26 +83,44 @@ public class DownloadIntentService extends IntentService {
             String rssFeed = this.getRssFeed(rss);
             Log.d("valorRSS", rssFeed);
             itemList = XmlFeedParser.parse(rssFeed);
-            Cursor cursor = this.podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI, null, null, null, null);
-            cursor.moveToFirst();
-
-            //Update database only if had web update
-            if (itemList.size() != cursor.getCount())
+            List<ItemFeed> feed = new ArrayList<>();
+            List<PodcastRoom> podcast = db.podcastDao().getAll();
+            int itemListSize = itemList.size();
+            if (podcast.size() != itemListSize)
             {
-
-                for (ItemFeed it : itemList) {
-                    ContentValues cv = new ContentValues();
-                    cv.put(PodcastProviderContract.EPISODE_TITLE, it.getTitle());
-                    cv.put(PodcastProviderContract.EPISODE_DATE, it.getPubDate());
-                    cv.put(PodcastProviderContract.EPISODE_LINK, it.getLink());
-                    cv.put(PodcastProviderContract.EPISODE_DESC, it.getDescription());
-                    cv.put(PodcastProviderContract.EPISODE_DOWNLOAD_LINK, it.getDownloadLink());
-
-                    podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI, cv);
+                PodcastRoom addPodcast[] = new PodcastRoom[itemListSize];
+                int i = 0;
+                for(ItemFeed it : itemList)
+                {
+                    addPodcast[i] = new PodcastRoom(it.getTitle(),
+                            it.getPubDate(), it.getLink(), it.getDescription(),
+                        it.getDownloadLink());
+                    i++;
                 }
-                Log.i("insert database", "inserido no banco");
+
+                db.podcastDao().insert(addPodcast);
             }
-            cursor.close();
+
+//            Cursor cursor = this.podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI, null, null, null, null);
+//            cursor.moveToFirst();
+//
+//            //Update database only if had web update
+//            if (itemList.size() != cursor.getCount())
+//            {
+//
+//                for (ItemFeed it : itemList) {
+//                    ContentValues cv = new ContentValues();
+//                    cv.put(PodcastProviderContract.EPISODE_TITLE, it.getTitle());
+//                    cv.put(PodcastProviderContract.EPISODE_DATE, it.getPubDate());
+//                    cv.put(PodcastProviderContract.EPISODE_LINK, it.getLink());
+//                    cv.put(PodcastProviderContract.EPISODE_DESC, it.getDescription());
+//                    cv.put(PodcastProviderContract.EPISODE_DOWNLOAD_LINK, it.getDownloadLink());
+//
+//                    podcastProvider.insert(PodcastProviderContract.EPISODE_LIST_URI, cv);
+//                }
+                Log.i("insert database", "inserido no banco");
+//            }
+            //cursor.close();
         }
         catch(IOException i)
         {
@@ -140,19 +160,15 @@ public class DownloadIntentService extends IntentService {
 
         //adicionando uri no banco
         Log.i("filePath", filePath);
-        String arg[] = {title};
-        ContentValues c = new ContentValues();
-        c.put(PodcastProviderContract.EPISODE_FILE_URI, filePath);
-        PodcastProvider podcastProvider = new PodcastProvider(getApplicationContext());
-        podcastProvider
-                .update(PodcastProviderContract.EPISODE_LIST_URI, c, "title=?", arg);
-
-        /*if (isExternalStorageWritable())
-        {
-            File file = getAlbumStorageDir("audios");
-            file.cre
-        }
-        */
+//        String arg[] = {title};
+//        ContentValues c = new ContentValues();
+//        c.put(PodcastProviderContract.EPISODE_FILE_URI, filePath);
+//        PodcastProvider podcastProvider = new PodcastProvider(getApplicationContext());
+//        podcastProvider
+//                .update(PodcastProviderContract.EPISODE_LIST_URI, c, "title=?", arg);
+        PodcastRoom p = db.podcastDao().getPodcastRoom(title).get(0);
+        p.setDownloadUri(filePath);
+        db.podcastDao().update(p);
         Intent intent = new Intent();
         intent.putExtra(POSICAO_ITEM, pos);
         intent.putExtra(ESTADO_ITEM, estado);

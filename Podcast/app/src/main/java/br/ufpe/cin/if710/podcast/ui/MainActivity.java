@@ -4,13 +4,14 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.arch.persistence.room.Room;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -27,8 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ufpe.cin.if710.podcast.R;
-import br.ufpe.cin.if710.podcast.db.PodcastProvider;
-import br.ufpe.cin.if710.podcast.db.PodcastProviderContract;
+import br.ufpe.cin.if710.podcast.db.architectureComponents.PodcastDatabase;
+import br.ufpe.cin.if710.podcast.db.architectureComponents.PodcastRoom;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 import br.ufpe.cin.if710.podcast.service.DownloadIntentService;
 import br.ufpe.cin.if710.podcast.ui.adapter.XmlFeedAdapter;
@@ -41,6 +42,7 @@ public class MainActivity extends Activity {
     private static boolean appInFront;
     private ListView items;
     private int positionClicked;
+    private PodcastDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +50,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         Stetho.initializeWithDefaults(this);
         items = (ListView) findViewById(R.id.items);
+        this.db = Room.databaseBuilder(this, PodcastDatabase.class, "episodes").build();
     }
 
     @Override
@@ -122,7 +125,8 @@ public class MainActivity extends Activity {
     }
 
     private void acessDatabase()
-    {
+    {/*
+            Log.d("recuperando do banco", title);
         PodcastProvider podcastProvider = new PodcastProvider(getApplicationContext());
         Cursor cursor = podcastProvider.query(PodcastProviderContract.EPISODE_LIST_URI, null, null, null, null);
         List<ItemFeed> feed = new ArrayList<>();
@@ -138,12 +142,12 @@ public class MainActivity extends Activity {
             ItemFeed itemFeed = new ItemFeed(title, link, pubDate, description,downloadLink);
             feed.add(itemFeed);
             cursor.moveToNext();
-            Log.d("recuperando do banco", title);
-        }
 
+    }
         XmlFeedAdapter xmlFeedAdapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed);
         items.setAdapter(xmlFeedAdapter);
         items.setTextFilterEnabled(true);
+*/
     }
 
     BroadcastReceiver downloadingAudio = new BroadcastReceiver()
@@ -166,12 +170,16 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             Log.i("insertDataBse", "Mostrando na tela");
             acessDatabase();
-
+            acessRoomDatabase();
             //enviando notificacao
             if (!MainActivity.appInFront)
                 notification();
         }
     };
+
+    private void acessRoomDatabase() {
+        new AcessDatabaseAsync().execute();
+    }
 
     BroadcastReceiver downloadAudioFinished = new BroadcastReceiver() {
         @Override
@@ -241,5 +249,27 @@ public class MainActivity extends Activity {
         return false;
     }
 */
+
+    public class AcessDatabaseAsync extends AsyncTask<Void, Void, List<ItemFeed>> {
+          @Override
+          protected List<ItemFeed> doInBackground(Void... voids) {
+              List<ItemFeed> feed = new ArrayList<>();
+              List<PodcastRoom> podcast = db.podcastDao().getAll();
+
+              for(PodcastRoom p : podcast) {
+                  //pegando valores cursor e adicionando na lista de feed
+                  ItemFeed itemFeed = new ItemFeed(p.getTitle(), p.getLink(), p.getPubDate(), p.getDescription(), p.getDownloadLink());
+                  feed.add(itemFeed);
+              }
+              return feed;
+          }
+
+          @Override
+          protected void onPostExecute(List<ItemFeed> feed) {
+              XmlFeedAdapter adapter = new XmlFeedAdapter(getApplicationContext(), R.layout.itemlista, feed);
+              items.setAdapter(adapter);
+              items.setTextFilterEnabled(true);
+          }
+      }
 }
 

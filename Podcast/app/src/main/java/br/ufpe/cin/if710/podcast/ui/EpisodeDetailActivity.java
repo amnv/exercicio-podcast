@@ -7,12 +7,11 @@ import android.util.Log;
 import android.widget.TextView;
 
 import br.ufpe.cin.if710.podcast.R;
-import br.ufpe.cin.if710.podcast.db.PodcastProvider;
 import br.ufpe.cin.if710.podcast.domain.ItemFeed;
 
 public class EpisodeDetailActivity extends Activity {
 
-    private PodcastProvider podcastProvider;
+    //private PodcastProvider podcastProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +20,7 @@ public class EpisodeDetailActivity extends Activity {
 
         //TODO preencher com informações do episódio clicado na lista...
 
-        this.podcastProvider = new PodcastProvider(getApplicationContext());
+        //this.podcastProvider = new PodcastProvider(getApplicationContext());
         Intent intent = getIntent();
         //retriving data from mainActivity
         String text = intent.getStringExtra(ItemFeed.CLICKED_ITEM);
