@@ -1,7 +1,7 @@
-#Architecture Components
+# Architecture Components
 
 
-###Código antes da refatoração
+### Código antes da refatoração
 A tabela que foi refatorada foi a **episodes**, estava dentro da classe PodcastDBHelper e tinha as seguintes colunas:
 
  -_id
@@ -17,7 +17,7 @@ A classe que fazia a comunicação entre o banco e o resto do sistema era a **Po
 E havia uma classe chamada **PodcastProviderContract** que continha assinaturas úteis para o desenvolvimento.
 
 
-###Implementação do Architecture Components
+### Implementação do Architecture Components
 Toda a implementação do banco anterior bem como chamada a métodos de consulta no banco não foram utilizadas no código final. Porém, as implementações foram preservadas para análise comparativa.
 
 A classe básica criada, PodcastRoom, mantinha todos os valores anteriores da tabela, porém sem a necessidade de se escrever código Sql. 
@@ -26,10 +26,10 @@ Foi criada a classe PodcastDao que continha várias consultas que anteriormente 
 Expecificamente se referindo aos códigos de consulta foram implementado 4 métodos diferentes de consulta para que ficasse mais fácil nas classes que usam informações do banco de conseguir a informação desejada. 
 
 ```Java
-	@Query("select * from episodes")
+    @Query("select * from episodes")
     List<PodcastRoom> getAll();
 
-	@Query("select downloadLink from episodes where title= :title")
+    @Query("select downloadLink from episodes where title= :title")
     List<String> getTitle(String title);
 
     @Query("select downloadUri from episodes where title = :title")
