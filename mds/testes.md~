@@ -1,0 +1,4 @@
+#Testes
+
+#Testes Unitários
+Ao tentar realizar testes unitários encontrei vários problemas pois as classes/metodos que tentei testar usavam alguma coisa de android e ao tentar usar ferramentas como o mockito fiquei com a sensação que os testes apenas testavam oq eu estava "mockando"
