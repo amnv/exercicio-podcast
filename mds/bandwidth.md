@@ -2,7 +2,7 @@
 
 A análise do consumo da rede não pode ser feito em sua totalidade visto que o android studio apresentou um erro.
 
-![img1]()
+![img1](https://github.com/amnv/exercicio-podcast/blob/master/img/RedeErro.png)
 
 Mas mesmo assim, foi possível tirar algumas conclusões dos resultados obtidos.
 
@@ -10,11 +10,13 @@ Mas mesmo assim, foi possível tirar algumas conclusões dos resultados obtidos.
 
 No começo da execução é feito o download das informações contidas no arquivo xml do diretório http://leopoldomt.com/if710/fronteirasdaciencia.xml. Visto que se trata de arquivos de texto o consumo de rede não é muito alto. Porém, visto que toda vez que a MainActivity é executada ela faz esse download essa ação é muito costusa do ponto de vista de consumo de rede e bateria.
 
-![img2]()
+![img2](https://github.com/amnv/exercicio-podcast/blob/master/img/RedeInicio.png)
 
 ### Download de áudio
 
 Ao iniciar o download de um áudio é perceptível o aumento de consumo da rede. Isso se da devido ao grande volume de dados que está sendo baixado. Essa é a única tela que se faz acesso a internet e, além disso, não há upload de dados.
+
+![img3](https://github.com/amnv/exercicio-podcast/blob/master/img/RedeDownload.png)
 
 ### Melhorias
 
