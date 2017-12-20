@@ -6,7 +6,7 @@ Para testar a memória foi inicialmente utilizado o Memory Profiler. Foi possív
 
 Ao começar a execução foi possível observar um aumento no uso da memória, esse aumento parece ser natural devido a necessidade de carregar informações do app para a memória.
 
-![img1]()
+![img1](https://github.com/amnv/exercicio-podcast/blob/master/img/MemoriaInicio.png)
 
 ### Interagindo com as telas
 
@@ -18,16 +18,16 @@ Após isso foi interagido com a tela de Settings onde foi utilizado as SharedPre
 
 Também foi possível observar que enquanto se interagia com outro app ele não acinou o GC e nem ocorreu redução no uso de memória.
 
-![img2]()
+![img2](https://github.com/amnv/exercicio-podcast/blob/master/img/MemoriaCarregandoDados.png)
 
 ### Percorrendo ListView
 
 Foi possível observar que ao percorrer há um aumento suave no uso de memoria.
 
-![img3]()
+![img3](https://github.com/amnv/exercicio-podcast/blob/master/img/MemoriaListView.png)
 
 ### Rotação de tela
 
 É possível observar a ação do GC realmente ao fazer a rotação de tela. Isso se deve provavelmente ao LiveCycle do app que destroi a activity quando a uma rotação de tela.
 
-![img4]()
+![img4](https://github.com/amnv/exercicio-podcast/blob/master/img/MemoriaRotacao.png)
